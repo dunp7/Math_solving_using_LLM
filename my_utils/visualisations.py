@@ -3,7 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
-
+import os
 
 def visualise_aur_results(models_names, datasets_names, results, colours, metric_name, location = "results/figures"):
     """Creates a bar plot to visualize F1/AUROC/AURAC scores across different models and datasets
@@ -21,6 +21,11 @@ def visualise_aur_results(models_names, datasets_names, results, colours, metric
     Returns:
         None
     """
+
+
+    # Check if the directory exists
+    if not os.path.exists(location):
+        os.makedirs(location)  # Create the directory if it doesn't exist
 
     spacing = 2.4  # Adjust this value to control the space between datasets
     x = np.arange(0, len(datasets_names) * spacing, spacing)
@@ -63,6 +68,9 @@ def visualise_aur_percentages_results(models_names, datasets_names, results, col
         None
     """
 
+    # Check if the directory exists
+    if not os.path.exists(location):
+        os.makedirs(location)  # Create the directory if it doesn't exist
     fig, axes = plt.subplots(len(datasets_names), 1, figsize=(12, 12), sharex=True, sharey=True)
     percentages = np.arange(10, 100, 10)
     results = np.array(results)
@@ -101,65 +109,63 @@ def visualise_aur_percentages_results(models_names, datasets_names, results, col
     plt.show()
 
 
-def visualise_SE_distribution(models_names, datasets_names, results, colours, location= "results/figures"):
-    """Creates a grouped box plot to visualize the distribution of semantic entropy (SE) values for various models 
-       across datasets
+def visualise_SE_distribution(models_names, dataset_name, results, colours, location = "results/figures"):
+    """
+    Creates a grouped box plot to visualize the distribution of semantic entropy (SE) values 
+    for various models on a single dataset.
 
     Parameters:
         models_names (list): A list of model names corresponding to the results
-        datasets_names (list): A list of dataset names for which AUROC scores are computed
-        results (list): A nested list containing AUROC scores for each model and dataset
+        dataset_name (str): The name of the dataset for which SE values are visualized
+        results (list): A list containing SE values for each model
         colours (dict): A dictionary mapping model names to their respective colors
+        location (str): Directory to save the output figure
 
     Output:
-        Saves the plot as `results/figures/SE_distribution.png`
+        Saves the plot as `SE_distribution.png` in the specified location.
 
     Returns:
         None
     """
+    import os
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as mpatches
 
-    reorder = []
-    for d in range(4):
-        for m in range(int(len(results)/4)):
-            reorder.append(results[m*4+d])
+    # Ensure the directory exists
+    if not os.path.exists(location):
+        os.makedirs(location)
 
-    results = reorder
-
-    groups = len(datasets_names)
+    # Calculate positions for the box plots
     boxes_per_group = len(models_names)
+    positions = [i for i in range(boxes_per_group)]
 
-    positions = [] # Set positions for the boxes (manually group them)
-    for i in range(groups):
-        positions += [i * (boxes_per_group + 1) + j for j in range(1, boxes_per_group + 1)]
+    plt.figure(figsize=(8, 6))
 
-    plt.figure(figsize=(16, 6))
+    # Create the box plots for each model
+    for idx, model in enumerate(models_names):
+        colour = colours[model]
+        plt.boxplot(
+            [results[idx]],  # Boxplot for this model's result
+            positions=[positions[idx]],  # Position for this box
+            patch_artist=True,
+            boxprops=dict(facecolor=colour, color=colour),
+            medianprops=dict(color="black"),
+            widths=0.5
+        )
 
-    # Create the boxplot - plot one box at a time with the correct color
-    for i in range(groups):  # Loop through each dataset group
-        for j in range(boxes_per_group):  # Loop through boxes within the group
-            idx = i * boxes_per_group + j  # Calculate overall index
-            colour = colours[models_names[j]]  # Get the color for this model
-            plt.boxplot(
-                [results[idx]],  # Boxplot for this model's result
-                positions=[positions[idx]],  # Position for this box
-                patch_artist=True,
-                boxprops=dict(facecolor=colour, color=colour),
-                medianprops=dict(color="black"),
-                widths=0.5
-            )
-
-    plt.xticks([i * (boxes_per_group + 1) + (boxes_per_group / 2) for i in range(groups)], datasets_names)
-    num_columns = len(models_names) // 3 + (len(models_names) % 3)
+    # Customize the plot
+    plt.xticks(positions, models_names, rotation=45)
     legend_patches = [mpatches.Patch(color=colours[model], label=model) for model in models_names]
-    plt.legend(handles=legend_patches, title="Entailment Models", loc="lower center", 
-               bbox_to_anchor=(0.5, -0.32), ncol=num_columns) # Place legend outside to the right
-    plt.grid(axis='y', linestyle='--', alpha=0.7)
-    plt.subplots_adjust(right=0.7)  # Shrink the plot to make space for the legend
-    plt.title('Distribution of Semantic Entropy')
-    plt.xlabel('Datatsets')
-    plt.ylabel('Semantic Entropy')
-    plt.savefig(location+'/SE_distribution.png', bbox_inches='tight')
+    plt.legend(handles=legend_patches, title="Entailment Models", loc="best")
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.title("Distribution of Semantic Entropy")
+    plt.xlabel("Models")
+    plt.ylabel("Semantic Entropy")
+
+    # Save and show the plot
+    plt.savefig(os.path.join(location, "SE_distribution.png"), bbox_inches="tight")
     plt.show()
+
 
 
 def visualise_SE_mean_std(models_names, datasets_names, results, colours, location= "results/figures"):
@@ -178,6 +184,10 @@ def visualise_SE_mean_std(models_names, datasets_names, results, colours, locati
     Returns:
         None
     """
+
+    # Check if the directory exists
+    if not os.path.exists(location):
+        os.makedirs(location)  # Create the directory if it doesn't exist
 
     grouped_results = {dataset: {} for dataset in datasets_names}
 
