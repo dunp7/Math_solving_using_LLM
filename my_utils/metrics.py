@@ -88,6 +88,11 @@ def calculate_rejection_accuracies(confidences, predictions, true_labels):
         accuracies.append(accuracy)
     return np.array(accuracies)
 
+def accuracy_at_quantile(accuracies, uncertainties, quantile):
+    cutoff = np.quantile(uncertainties, quantile)
+    select = uncertainties <= cutoff
+    return np.mean(accuracies[select])
+
 
 def calculate_aurac(datasets):
     """Computes the AURAC for each dataset
