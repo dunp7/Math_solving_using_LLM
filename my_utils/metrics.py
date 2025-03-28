@@ -26,9 +26,7 @@ def assess_acc(model, tokenizer, question, answers, response):
     prompt = (f"Question: {question}\n"
             f"Expected answer: {answers}\n"
             f"Proposed answer: {response}\n"
-            "Does the proposed answer convey the same meaning as the expected answer? "
-            "Answer 'yes' if they are semantically equivalent and 'no' if they are not. "
-            "Be precise in your evaluation and answer only with 'yes' or 'no'.")
+            "Within the context of the question, does the proposed answer mean the same as the expected answer? Respond only with yes or no.")
 
 
     acc_input_ids = tokenizer(prompt, return_tensors="pt").to(model.device)
