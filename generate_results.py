@@ -7,7 +7,7 @@ from my_utils.semantic_entropy import gen_responses_probs, cluster_responses, ca
 from my_utils.metrics import assess_acc
 
 
-def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer):
+def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, intro_promt= None):
     """Generates responses and accuracy labels for questions in multiple datasets using a specified language model
 
     Parameters:
@@ -19,13 +19,13 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer):
     Returns:
         None: The results are directly saved to disk
     """
-    
+    if not intro_promt: 
+        intro_promt = "Answer the following question in a single brief but complete sentence. "
     for dataset in datasets:
         all_responses = []
         all_acc_resp = []
         all_labels = []
 
-        intro_promt = "Answer the following question in a single brief but complete sentence. "
         print(f"\nGenerating responses for {dataset.info.description} dataset...")
 
         for i in tqdm(range(len(dataset))):
