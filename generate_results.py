@@ -21,6 +21,7 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, intr
     """
     if not intro_promt: 
         intro_promt = "Answer the following question in a single brief but complete sentence. "
+    print(intro_promt)
     for dataset in datasets:
         all_responses = []
         all_acc_resp = []
