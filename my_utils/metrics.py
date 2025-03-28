@@ -104,18 +104,31 @@ def calculate_aurac(datasets):
     rej_acc_list = []
 
     for d in datasets:
-        rej_acc = calculate_rejection_accuracies(
-            np.array(d["semantic_entropy"]),
-            np.where(np.array(d["semantic_entropy"]) >= 0.5, 1, 0), 
-            1-np.array(d["labels"])
-        )
-        rejection_percentages = np.linspace(0, 100, 11)  # Rejection percentages in %
-        rej_acc_list.append(rej_acc[1:-1])
-        aurac = np.trapz(rej_acc, rejection_percentages) / 100
-        aurac_list.append(aurac)
-        print(f"{d.info.description:20} dataset: {aurac:8.4f}")
+        # Extract semantic entropy and labels
+        semantic_entropy = np.array(d["semantic_entropy"])
+        labels = np.array(d["labels"])
 
-    return (aurac_list, rej_acc_list)
+        # Define rejection thresholds as quantiles
+        rejection_percentages = np.linspace(0.1, 1, 20)  # Quantiles from 10% to 100%
+
+        # Calculate rejection accuracies at each threshold
+        rej_acc = [
+            accuracy_at_quantile(1 - labels, semantic_entropy, q)
+            for q in rejection_percentages
+        ]
+
+        # Store the rejection accuracy curve
+        rej_acc_list.append(rej_acc)
+
+        # Compute the area under the rejection accuracy curve (AURAC)
+        dx = rejection_percentages[1] - rejection_percentages[0]
+        aurac = np.sum(np.array(rej_acc) * dx)  # Equivalent to trapezoidal integration
+        aurac_list.append(aurac)
+
+        # Print results for the dataset
+        print(f"{d['info']['description']:20} dataset: {aurac:8.4f}")
+
+    return aurac_list, rej_acc_list
 
 
 def calculate_f1(datasets):
