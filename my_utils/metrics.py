@@ -131,7 +131,7 @@ def calculate_aurac(datasets):
         aurac_list.append(aurac)
 
         # Print results for the dataset
-        print(f"{d['info']['description']:20} dataset: {aurac:8.4f}")
+        print(f"{d.info.description:20} dataset: {aurac:8.4f}")
 
     return aurac_list, rej_acc_list
 
