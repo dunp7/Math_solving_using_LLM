@@ -7,7 +7,7 @@ from my_utils.semantic_entropy import gen_responses_probs, cluster_responses, ca
 from my_utils.metrics import assess_acc
 
 
-def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, intro_promt= None):
+def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, acc_model, acc_tokenizer ,intro_promt= None):
     """Generates responses and accuracy labels for questions in multiple datasets using a specified language model
 
     Parameters:
@@ -37,7 +37,7 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, intr
             empty_cache()
             acc_response_text = llm_tokenizer.decode(acc_response["sequences"][0], skip_special_tokens=True)
             empty_cache()
-            label = assess_acc(llm_model, llm_tokenizer, dataset[i]["question"], str(dataset[i]["answers"]["text"]), acc_response_text)
+            label = assess_acc(acc_model, acc_tokenizer, dataset[i]["question"], str(dataset[i]["answers"]["text"]), acc_response_text)
             empty_cache()
             all_responses.append(responses)
             all_acc_resp.append(acc_response)
