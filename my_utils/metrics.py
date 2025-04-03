@@ -2,7 +2,7 @@
 
 import numpy as np
 from sklearn.metrics import roc_auc_score, f1_score
-
+from sklearn import metrics
 
 def assess_acc(model, tokenizer, question, answers, response):
     """Assesses the semantic equivalence between a proposed response and the expected answer for a given question
@@ -53,7 +53,13 @@ def calculate_auroc(datasets):
 
     auroc_list = []
     for d in datasets:
-        auroc = roc_auc_score(1-np.array(d["labels"]), d["semantic_entropy"])
+        y_true = np.array(d["labels"])  # No inversion
+        y_score = np.array(d["semantic_entropy"])
+        
+        # Compute ROC curve
+        fpr, tpr, _ = metrics.roc_curve(y_true, y_score)
+        auroc = metrics.auc(fpr, tpr)
+
         auroc_list.append(auroc)
         print(f"{d.info.description:20} dataset: {auroc:8.4f}")
 
@@ -88,6 +94,8 @@ def calculate_rejection_accuracies(confidences, predictions, true_labels):
         accuracies.append(accuracy)
     return np.array(accuracies)
 
+
+
 def accuracy_at_quantile(accuracies, uncertainties, quantile):
     cutoff = np.quantile(uncertainties, quantile)
     select = uncertainties <= cutoff
@@ -118,7 +126,7 @@ def calculate_aurac(datasets):
 
         # Calculate rejection accuracies at each threshold
         rej_acc = [
-            accuracy_at_quantile(1 - labels, semantic_entropy, q)
+            accuracy_at_quantile(labels, semantic_entropy, q)
             for q in rejection_percentages
         ]
 
