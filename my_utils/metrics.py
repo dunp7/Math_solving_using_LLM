@@ -17,7 +17,7 @@ def assess_acc_SQuAD(answer, response):
     metrics = squad_metric(response, answer)
     f1_scores = metrics['f1']
  
-    return 1 if int(f1_scores > 0.5) else 0
+    return 1 if f1_scores > 0.5 else 0
 
 
 def assess_acc_llm(model, tokenizer, question, answer, response):
