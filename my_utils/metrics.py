@@ -9,15 +9,15 @@ from torchmetrics.text import SQuAD
 def assess_acc_SQuAD(answer, response):
     """Assesses the semantic equivalence between a proposed response and the expected answer for a given question
     """
-    answer = [{"answers": {"text": [answer]}}]  
-    response = [{"prediction_text": response}]
+    answer = [{"answers": {"text": [answer]}, "id": "1"}]
+    response = [{"prediction_text": response, "id": "1"}]
     
 
     squad_metric = SQuAD()
     metrics = squad_metric(response, answer)
     f1_scores = metrics['f1']
  
-    return int(f1_scores > 0.5)
+    return 1 if int(f1_scores > 0.5) else 0
 
 
 def assess_acc_llm(model, tokenizer, question, answer, response):
