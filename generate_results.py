@@ -4,10 +4,10 @@ from torch.cuda import empty_cache
 from tqdm import tqdm
 from copy import deepcopy
 from my_utils.semantic_entropy import gen_responses_probs, cluster_responses, calculate_sem_entr
-from my_utils.metrics import assess_acc
+from my_utils.metrics import assess_acc_llm, assess_acc_SQuAD
 
 
-def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, acc_model, acc_tokenizer ,intro_promt= None):
+def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, acc_model, acc_tokenizer ,intro_promt= None, acc_flg=0):
     """Generates responses and accuracy labels for questions in multiple datasets using a specified language model
 
     Parameters:
@@ -15,7 +15,8 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, acc_
         data_answers_path (str): The directory path where the updated datasets with generated answers will be saved
         llm_model (AutoModelForCausalLM): The language model used to generate responses
         llm_tokenizer (AutoTokenizer): The tokenizer associated with the language model
-
+        intro_promt (str, optional): An introductory prompt for the language model. Defaults to None.
+        acc_flg (int, optional): 1 for SQuAD, 0 for LLM. Defaults to 0.
     Returns:
         None: The results are directly saved to disk
     """
@@ -37,7 +38,10 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, acc_
             empty_cache()
             acc_response_text = llm_tokenizer.decode(acc_response["sequences"][0], skip_special_tokens=True)
             empty_cache()
-            label = assess_acc(acc_model, acc_tokenizer, dataset[i]["question"], str(dataset[i]["answers"]["text"]), acc_response_text)
+            if acc_flg == 1:
+                label = assess_acc_SQuAD(str(dataset[i]["answers"]["text"]), acc_response_text)
+            else:
+                label = assess_acc_llm(acc_model, acc_tokenizer, dataset[i]["question"], str(dataset[i]["answers"]["text"]), acc_response_text)
             empty_cache()
             all_responses.append(responses)
             all_acc_resp.append(acc_response)
