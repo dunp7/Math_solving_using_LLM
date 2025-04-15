@@ -41,7 +41,7 @@ def load_ds(dataset_name, seed):
         validation_dataset = dataset["test"]
 
         reformat = lambda x: {
-            'question': x['question'], 'answers' : {'text': [str(x['answer'])]}
+            'question': x['question'], 'answers' : {'text': [str(x['final_ans'])]}
         }
 
         train_dataset = train_dataset.map(reformat)
