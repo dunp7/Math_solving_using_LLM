@@ -37,8 +37,8 @@ def load_ds(dataset_name, seed):
 
     elif dataset_name == 'multiarith':
 
-        train_dataset = datasets.load_dataset("ChilleD/MultiArith", spilit="train")
-        validation_dataset = datasets.load_dataset("ChilleD/MultiArith", spilit="test")
+        train_dataset = datasets.load_dataset("ChilleD/MultiArith", split="train")
+        validation_dataset = datasets.load_dataset("ChilleD/MultiArith", split="test")
 
         reformat = lambda x: {
             'question': x['question'], 'answers' : {'text': [str(x['final_ans'])]}
