@@ -49,7 +49,9 @@ def load_ds(dataset_name, seed):
 
     elif dataset_name == "gsm8k":
         train_dataset = datasets.load_dataset("openai/gsm8k", "main", split="train")
-        validation_dataset = datasets.load_dataset("openai/gsm8k", "main", split="test") + train_dataset
+
+
+        validation_dataset = datasets.concatenate_datasets([train_dataset, datasets.load_dataset("openai/gsm8k", "main", split="test")])
         # reformat = lambda x: {
         #     'question': x['question'], 'answers' : {'text': [str(x['answer'])]}
         # }
