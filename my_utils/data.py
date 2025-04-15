@@ -36,7 +36,7 @@ def load_ds(dataset_name, seed):
         validation_dataset = validation_dataset.map(reformat)
 
     elif dataset_name == 'multiarith':
-        dataset = load_dataset("ChilleD/MultiArith")
+        dataset = datasets.load_dataset("ChilleD/MultiArith")
         train_dataset = dataset["train"]
         validation_dataset = dataset["test"]
 
@@ -48,7 +48,7 @@ def load_ds(dataset_name, seed):
         validation_dataset = validation_dataset.map(reformat)
 
     elif dataset_name == "gsm8k":
-        dataset = load_dataset("openai/gsm8k", "main")
+        dataset = datasets.load_dataset("openai/gsm8k", "main")
         train_dataset = dataset['train']
         validation_dataset = dataset['test'] + dataset['train']
 
