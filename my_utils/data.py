@@ -78,11 +78,14 @@ def sample_ds(dataset, n_samples, seed, name):
         Dataset: Returns a Dataset with size equal to the n_samples and name is saved in the .info.description
     """
 
+    if n_samples > dataset.num_rows:
+        raise ValueError(f"Cannot sample {n_samples} rows from a dataset with only {dataset.num_rows} rows.")
+
     random.seed(seed)
-    random_indices = [random.randint(0, dataset.num_rows) for _ in range(n_samples)]
+    random_indices = random.sample(range(dataset.num_rows), n_samples)  # Unique indices
     dataset = dataset.select(random_indices)
-    dataset.info.description = name
-    print("Dataset: ", name)
+    dataset.info.description = name  # Save name in metadata
+    print(f"Dataset: {name}")
     print(dataset, "\n")
     return dataset
 
