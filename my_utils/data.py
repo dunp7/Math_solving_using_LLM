@@ -20,45 +20,44 @@ def load_ds(dataset_name, seed):
     """
 
     train_dataset, validation_dataset = None, None
-    if dataset_name == "squad":
-        dataset = datasets.load_dataset("squad")
-        train_dataset = dataset["train"]
-        validation_dataset = dataset["validation"]
 
-    elif dataset_name == 'svamp':
+
+    if dataset_name == 'svamp':
         dataset = datasets.load_dataset('ChilleD/SVAMP')
         train_dataset = dataset["train"]
         validation_dataset = dataset["test"]
 
         reformat = lambda x: {
-            'question': x['Question'], 'context': x['Body'], 'type': x['Type'],
+            'question': x['Question'] + x['Body'], 'type': x['Type'],
             'equation': x['Equation'], 'id': x['ID'],
             'answers': {'text': [str(x['Answer'])]}}
 
         train_dataset = train_dataset.map(reformat)
         validation_dataset = validation_dataset.map(reformat)
 
-    elif dataset_name == 'nq':
-        dataset = datasets.load_dataset("nq_open")
+    elif dataset_name == 'multiarith':
+        dataset = load_dataset("ChilleD/MultiArith")
         train_dataset = dataset["train"]
-        validation_dataset = dataset["validation"]
-        md5hash = lambda s: str(int(hashlib.md5(s.encode('utf-8')).hexdigest(), 16))
+        validation_dataset = dataset["test"]
 
         reformat = lambda x: {
-            'question': x['question']+'?',
-            'answers': {'text': x['answer']},
-            'context': '',
-            'id': md5hash(str(x['question'])),
+            'question': x['question'], 'answers' : {'text': [str(x['answer'])]}
         }
 
         train_dataset = train_dataset.map(reformat)
         validation_dataset = validation_dataset.map(reformat)
 
-    elif dataset_name == "trivia_qa":
-        dataset = datasets.load_dataset('TimoImhof/TriviaQA-in-SQuAD-format')['unmodified']
-        dataset = dataset.train_test_split(test_size=0.2, seed=seed)
+    elif dataset_name == "gsm8k":
+        dataset = load_dataset("openai/gsm8k", "main")
         train_dataset = dataset['train']
-        validation_dataset = dataset['test']
+        validation_dataset = dataset['test'] + dataset['train']
+
+        reformat = lambda x: {
+            'question': x['question'], 'answers' : {'text': [str(x['answer'])]}
+        }
+
+        train_dataset = train_dataset.map(reformat)
+        validation_dataset = validation_dataset.map(reformat)
 
     else:
         raise ValueError
