@@ -26,7 +26,7 @@ def load_ds(dataset_name, seed):
         dataset = datasets.load_dataset('ChilleD/SVAMP')
         train_dataset = dataset["train"]
         validation_dataset = dataset["test"]
-        print(dataset, "\n")
+
         reformat = lambda x: {
             'question': x['Question'] + x['Body'], 'type': x['Type'],
             'equation': x['Equation'], 'id': x['ID'],
@@ -36,22 +36,20 @@ def load_ds(dataset_name, seed):
         validation_dataset = validation_dataset.map(reformat)
 
     elif dataset_name == 'multiarith':
-        dataset = datasets.load_dataset("ChilleD/MultiArith")
-        train_dataset = dataset["train"]
-        validation_dataset = dataset["test"]
-        print(dataset, "\n")
-        # reformat = lambda x: {
-        #     'question': x['question'], 'answers' : {'text': [str(x['final_ans'])]}
-        # }
 
-        # train_dataset = train_dataset.map(reformat)
-        # validation_dataset = validation_dataset.map(reformat)
+        train_dataset = datasets.load_dataset("ChilleD/MultiArith", spilit="train")
+        validation_dataset = datasets.load_dataset("ChilleD/MultiArith", spilit="test")
+
+        reformat = lambda x: {
+            'question': x['question'], 'answers' : {'text': [str(x['final_ans'])]}
+        }
+
+        train_dataset = train_dataset.map(reformat)
+        validation_dataset = validation_dataset.map(reformat)
 
     elif dataset_name == "gsm8k":
-        dataset = datasets.load_dataset("openai/gsm8k", "main")
-        train_dataset = dataset['train']
-        validation_dataset = dataset['test'] + dataset['train']
-        print(dataset, "\n")
+        train_dataset = datasets.load_dataset("openai/gsm8k", "main", split="train")
+        validation_dataset = datasets.load_dataset("openai/gsm8k", "main", split="test") + train_dataset
         # reformat = lambda x: {
         #     'question': x['question'], 'answers' : {'text': [str(x['answer'])]}
         # }
