@@ -1,10 +1,9 @@
 """Data Utilities."""
 
-import hashlib
 import datasets
 import os
 import random
-
+import re
 
 def load_ds(dataset_name, seed):
     """ Loads datasets from Hugging Face
@@ -52,10 +51,16 @@ def load_ds(dataset_name, seed):
 
 
         validation_dataset = datasets.concatenate_datasets([train_dataset, datasets.load_dataset("openai/gsm8k", "main", split="test")])
-        reformat = lambda x: {
-            'question': x['question'], 'answers' : {'text': [str(x['answer'])]}
-        }
 
+        def extract_number(answer_text):
+            """Extracts the number from the answer text."""
+            match = re.search(r'####\s*(\d+(\.\d+)?)', answer_text)
+            return match.group(0) if match else None
+
+        reformat = lambda x: {
+            'question': x['question'],
+            'answers': {'text': [extract_number(str(x['answer']))]},
+        }
         train_dataset = train_dataset.map(reformat)
         validation_dataset = validation_dataset.map(reformat)
 
