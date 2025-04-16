@@ -58,8 +58,8 @@ def load_ds(dataset_name, seed):
 
         def extract_number(answer_text):
             # Use regex to find the first number in the text
-            match = re.search(r'####\s*(\d+(\.\d+)?)', answer_text)
-            return match.group(0) if match else None
+            match = re.search(r'####\s*(\d+)', answer_text)
+            return match.group(1) if match else None
 
         reformat = lambda x: {
             'question': x['question'],
