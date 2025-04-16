@@ -27,14 +27,13 @@ def load_ds(dataset_name, seed):
         validation_dataset = dataset["test"]
 
         reformat = lambda x: {
-            'question': x['Question'], 'type': x['Type'],
+            'question': x['Body'] + ' ' + x['Question'], 'context': x['Body'], 'type': x['Type'],
             'equation': x['Equation'], 'id': x['ID'],
-            'answers': {'text': [str(x['Answer'])]}
-        }
+            'answers': {'text': [str(x['Answer'])]}}
+
 
         train_dataset = train_dataset.map(reformat)
         validation_dataset = validation_dataset.map(reformat)
-
 
     elif dataset_name == 'multiarith':
 
@@ -55,7 +54,7 @@ def load_ds(dataset_name, seed):
         validation_dataset = datasets.concatenate_datasets([train_dataset, datasets.load_dataset("openai/gsm8k", "main", split="test")])
 
         def extract_number(answer_text):
-            """Extracts the number from the answer text."""
+            # Use regex to find the first number in the text
             match = re.search(r'####\s*(\d+(\.\d+)?)', answer_text)
             return match.group(0) if match else None
 
