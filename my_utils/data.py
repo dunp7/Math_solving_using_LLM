@@ -26,7 +26,7 @@ def load_ds(dataset_name, seed):
         train_dataset = dataset["train"]
         validation_dataset = dataset["test"]
 
-        reformat = lambda x: {
+        reformat = lambda x: {\
             'question': x['question_concat'],
             'type': x['Type'],
             'equation': x['Equation'],
