@@ -52,12 +52,12 @@ def load_ds(dataset_name, seed):
 
 
         validation_dataset = datasets.concatenate_datasets([train_dataset, datasets.load_dataset("openai/gsm8k", "main", split="test")])
-        # reformat = lambda x: {
-        #     'question': x['question'], 'answers' : {'text': [str(x['answer'])]}
-        # }
+        reformat = lambda x: {
+            'question': x['question'], 'answers' : {'text': [str(x['answer'])]}
+        }
 
-        # train_dataset = train_dataset.map(reformat)
-        # validation_dataset = validation_dataset.map(reformat)
+        train_dataset = train_dataset.map(reformat)
+        validation_dataset = validation_dataset.map(reformat)
 
     else:
         raise ValueError
