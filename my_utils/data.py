@@ -27,7 +27,7 @@ def load_ds(dataset_name, seed):
         validation_dataset = dataset["test"]
 
         reformat = lambda x: {
-            'question': + x['Body']+x['Question'], 'type': x['Type'],
+            'question': x['Body']+x['Question'], 'type': x['Type'],
             'equation': x['Equation'], 'id': x['ID'],
             'answers': {'text': [str(x['Answer'])]}}
 
