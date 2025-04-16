@@ -27,13 +27,16 @@ def load_ds(dataset_name, seed):
         validation_dataset = dataset["test"]
 
         reformat = lambda x: {
-             'question': x['Question'] + x['Body'], 'type': x['Type'],
-             'equation': x['Equation'], 'id': x['ID'],
-             'answers': {'text': [str(x['Answer'])]}}
-
+            'question': str(x['Question']) + str(x['Body']),  # Convert both to strings
+            'type': x['Type'],
+            'equation': x['Equation'],
+            'id': x['ID'],
+            'answers': {'text': [str(x['Answer'])]}
+        }
 
         train_dataset = train_dataset.map(reformat)
         validation_dataset = validation_dataset.map(reformat)
+
 
     elif dataset_name == 'multiarith':
 
