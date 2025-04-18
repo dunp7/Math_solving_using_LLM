@@ -52,8 +52,6 @@ def load_ds(dataset_name, seed):
 
     elif dataset_name == "gsm8k":
         train_dataset = datasets.load_dataset("openai/gsm8k", "main", split="train")
-
-
         validation_dataset = datasets.concatenate_datasets([train_dataset, datasets.load_dataset("openai/gsm8k", "main", split="test")])
 
         def extract_number(answer_text):
