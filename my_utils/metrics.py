@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.metrics import f1_score
 from sklearn import metrics
 from torchmetrics.text import SQuAD 
-
+from google import genai
 
 def assess_acc_SQuAD(response, answer):
     """Assesses the semantic equivalence between a proposed response and the expected answer for a given question
@@ -47,6 +47,35 @@ def assess_acc_llm(model, tokenizer, question, answer, response):
     
     
     return 1 if "yes" in text_res else 0
+
+def assess_acc_gemini(api_key, question, answer, response):
+    """Assesses the semantic equivalence between a proposed response and the expected answer for a given question
+
+    Parameters:
+        api_key (str): The API key for the Gemini API
+        question (str): The question to which the answers are related
+        answers (str): The ground-truth answer(s) to the question
+        response (str): The proposed answer to be assessed
+
+    Returns:
+        int: Returns 1 if the model determines the response is equivalent to the expected answer, otherwise 0
+    """
+    client = genai.Client(api_key= api_key)
+    prompt = (f"We are assessing the quality of answers to the following question: {question}\n"
+            f"The expected answer is: {answer}\n"
+            f"The proposed answer is: {response}\n"
+            f"Within the context of the question, does the proposed answer mean the same as the expected answer?\n"
+            f"Respond only with yes or no.")
+
+    # Use Gemini API for text generation
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt,
+    )
+    if "yes" in response.text.lower():
+        return 1
+    else:
+        return 0
 
 
 def calculate_auroc(datasets):

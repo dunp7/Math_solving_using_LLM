@@ -235,3 +235,5 @@ def calculate_sem_entr(clusters, sequences_prob):
         sem_entr += cluster_prob * np.log(cluster_prob)
     
     return -sem_entr
+
+
