@@ -7,7 +7,7 @@ from my_utils.semantic_entropy import gen_responses_probs, cluster_responses, ca
 from my_utils.metrics import assess_acc_llm, assess_acc_SQuAD, assess_acc_gemini
 import time
 
-def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, acc_model, acc_tokenizer ,intro_promt= None, acc_flg=0):
+def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, acc_model= None, acc_tokenizer = None ,intro_promt= None, acc_flg=0):
     """Generates responses and accuracy labels for questions in multiple datasets using a specified language model
 
     Parameters:
