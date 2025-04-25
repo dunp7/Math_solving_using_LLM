@@ -78,7 +78,7 @@ def assess_acc_gemini(api_key, question, answer, response):
         return 0
 
 
-def calculate_auroc(datasets):
+def calculate_auroc(datasets, flg = 0):
     """Computes the AUROC for each dataset
 
     Parameters:
@@ -91,9 +91,12 @@ def calculate_auroc(datasets):
 
     auroc_list = []
     for d in datasets:
-        y_true = np.array(d["labels"])  # No inversion
-        y_score = np.array(d["semantic_entropy"])
-        
+        y_true = np.array(d["labels"])  
+
+        if flg == 0:
+            y_score = np.array(d["semantic_entropy"])
+        elif flg == 1: 
+            y_score = np.array(d["p_true"]) 
         # Compute ROC curve
         fpr, tpr, _ = metrics.roc_curve(y_true, y_score)
         auroc = metrics.auc(fpr, tpr)
@@ -110,7 +113,7 @@ def accuracy_at_quantile(accuracies, uncertainties, quantile):
     return np.mean(accuracies[select])
 
 
-def calculate_aurac(datasets):
+def calculate_aurac(datasets, flg = 0):
     """Computes the AURAC for each dataset
 
     Parameters:
@@ -125,13 +128,17 @@ def calculate_aurac(datasets):
     rej_acc_list = []
 
     for d in datasets:
-        
-        semantic_entropy = np.array(d["semantic_entropy"])
+
+        if flg == 0:
+            y_score = np.array(d["semantic_entropy"])
+        elif flg == 1: 
+            y_score = np.array(d["p_true"]) 
+        y_score = np.array(d["semantic_entropy"])
         labels = np.array(d["labels"])
 
         rejection_percentages = np.linspace(0.1, 1, 20)  
         rej_acc = [
-            accuracy_at_quantile(labels, semantic_entropy, q)
+            accuracy_at_quantile(labels, y_score, q)
             for q in rejection_percentages
         ]
         rej_acc_list.append(rej_acc)
@@ -195,7 +202,7 @@ def calculate_mem_mean_std(datasets):
     return (mem_means, mem_stds)
 
 
-def metric_entail_models(model_results, metric, measure_flg = 1):
+def metric_entail_models(model_results, metric, measure_flg = 0):
     """Computes various performance metrics or other properties for different entailment models and their respective 
        sizes across datasets.
     
@@ -229,10 +236,10 @@ def metric_entail_models(model_results, metric, measure_flg = 1):
 
             if metric == "AUROC":
                 print(f"\nAUROC scores for {model.capitalize()} {size}")
-                result = calculate_auroc(only_datasets)
+                result = calculate_auroc(only_datasets, measure_flg)
             elif metric == "AURAC":
                 print(f"\nAURAC scores for {model.capitalize()} {size}")
-                result = calculate_aurac(only_datasets)[0]
+                result = calculate_aurac(only_datasets, measure_flg)[0]
             elif metric == "SE":
                 results += [dataset["semantic_entropy"] for dataset in only_datasets]
                 continue
