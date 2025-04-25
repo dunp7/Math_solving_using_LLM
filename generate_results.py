@@ -22,7 +22,6 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_m
     """
 
     
-    prompt_end = "Therefore, the answer (arabic numerals) is "
 
     if not intro_promt: 
         intro_promt = "Answer the following question in a single brief but complete sentence. "
@@ -36,7 +35,7 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_m
 
         for i in tqdm(range(len(dataset))):
             # Generate responses for Semantic Entropy and Accuracy
-            prompt = intro_promt + dataset[i]["question"] + prompt_end
+            prompt = intro_promt + dataset[i]["question"]
             responses = gen_responses_probs(llm_model, llm_tokenizer, prompt)
             empty_cache()
             acc_response = gen_responses_probs(llm_model, llm_tokenizer, prompt, number_responses=1, temperature=0.1)
