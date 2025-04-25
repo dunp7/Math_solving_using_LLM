@@ -35,10 +35,9 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_m
         for i in tqdm(range(len(dataset))):
             # Generate responses for Semantic Entropy and Accuracy
             prompt = f"""
-            {instruct_prompt}
-            Answer the following question in a single brief but complete sentence. 
-            Question: {dataset[i]["question"]}
-            Answer:
+            {instruct_prompt}.\n Answer the following question in a single brief but complete sentence.
+            \n Question: {dataset[i]["question"]}
+            \n Answer:
             """
 
             responses = gen_responses_probs(llm_model, llm_tokenizer, prompt)
