@@ -7,7 +7,7 @@ from my_utils.semantic_entropy import gen_responses_probs, cluster_responses, ca
 from my_utils.metrics import assess_acc_llm, assess_acc_SQuAD, assess_acc_gemini
 import time
 
-def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, acc_model= None, acc_tokenizer = None ,intro_promt= None, acc_flg=0):
+def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_model= None, acc_tokenizer = None ,intro_promt= None, acc_flg=0, api_key = None):
     """Generates responses and accuracy labels for questions in multiple datasets using a specified language model
 
     Parameters:
@@ -48,7 +48,7 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, acc_
             elif acc_flg == 1:
                 label = assess_acc_llm(acc_model, acc_tokenizer, dataset[i]["question"], str(dataset[i]["answers"]["text"]), acc_response_text)
             elif acc_flg == 2:
-                label = assess_acc_gemini(dataset[i]["question"], dataset[i]["answers"]["text"], acc_response_text)
+                label = assess_acc_gemini(api_key, dataset[i]["question"], dataset[i]["answers"]["text"], acc_response_text)
                 time.sleep(3)
             empty_cache()
             all_responses.append(responses)
