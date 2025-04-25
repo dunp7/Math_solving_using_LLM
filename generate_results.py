@@ -40,7 +40,7 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_m
             Question: {dataset[i]["question"]}
             Answer:
             """
-            
+
             responses = gen_responses_probs(llm_model, llm_tokenizer, prompt)
             empty_cache()
             acc_response = gen_responses_probs(llm_model, llm_tokenizer, prompt, number_responses=1, temperature=0.1)
@@ -52,7 +52,7 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_m
             elif acc_flg == 1:
                 label = assess_acc_llm(acc_model, acc_tokenizer, dataset[i]["question"], str(dataset[i]["answers"]["text"]), acc_response_text)
             elif acc_flg == 2:
-                label = assess_acc_gemini(api_key, dataset[i]["question"], dataset[i]["answers"]["text"], acc_response_text)
+                label = assess_acc_gemini(api_key, dataset[i]["question"], str(dataset[i]["answers"]["text"]), acc_response_text)
                 time.sleep(3)
             empty_cache()
             all_responses.append(responses)
