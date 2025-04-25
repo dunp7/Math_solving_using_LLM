@@ -4,48 +4,80 @@ P(true) baseline to compare with semantic entropy
 based on https://github.com/jlko/semantic_uncertainty/blob/master/semantic_uncertainty/uncertainty/uncertainty_measures/p_true.py
 
 """
-import tqdm
+from tqdm import tqdm
+from copy import deepcopy
+import torch.nn.functional as F
+import torch
 
-
-
-
-
-
-
-
-
-def generate_ptrue(
-    datasets, data_ptrue_path, llm_tokenizer, entail_model, calculate_p_true_function, few_shot_prompt=None
-):
-    """Calculates P_true for questions in multiple datasets.
+def calculate_p_true(datasets, entailment_model, entailment_tokenizer, tokenizer, save_path):
+    """
+    Computes p_true for multiple datasets and saves the updated datasets, handling tokenized answers.
 
     Parameters:
-        datasets (list): A list of datasets, where each dataset contains questions and previously generated answers.
-        data_ptrue_path (str): The directory path where the updated datasets with P_true will be saved.
-        entail_model (AutoModelForSequenceClassification or AutoModelForCausalLM): The model used for entailment evaluation.
-        calculate_p_true_function (function): Function that calculates the p_true metric.
-        few_shot_prompt (str, optional): A pre-constructed few-shot prompt for calculating p_true. Defaults to None.
+        datasets (list): List of datasets to process.
+        tokenizer (AutoTokenizer): Tokenizer for decoding tokenized answers.
+        save_path (str): Directory path to save updated datasets.
 
     Returns:
-        None: The results are directly saved to disk.
+        None: Updated datasets are saved to disk.
     """
     for dataset in datasets:
-        all_ptrue_scores = []
+        # Create a deep copy to avoid modifying the original dataset
+        dataset_copy = deepcopy(dataset)
 
-        print(f"\nCalculating P_true for {dataset_copy.info.description} dataset...")
+        print(f"Processing dataset: {dataset_copy.info.description}")
+        p_true_values = []
 
-        for i in tqdm(range(len(dataset_copy))):
-            question = dataset[i]["question"]
-            generated_answers = dataset[i]["generated_answers_acc"]
-            most_probable_answer = llm_tokenizer.decode(generated_answers["sequences"][0], skip_special_tokens=True)
+        # Compute p_true for each row in the dataset
+        for row in tqdm(dataset_copy):
+            question_concat = row['question_concat']
+            generated_answers = row['generated_answers']
+            most_deterministic_answer = row['generated_answer_acc']
 
-            # Calculate P_true
-            p_true_score = calculate_p_true_function(
-                entail_model, question, most_probable_answer, 
-                [ans["text"] for ans in generated_answers["sequences"]], few_shot_prompt
+            # Decode tokenized answers (checking for possible nested structures)
+            decoded_generated_answers = []
+            for answer in generated_answers:
+                # In case 'answer' is a list of sequences, decode each
+                decoded_answer = tokenizer.decode(answer['sequences'][0], skip_special_tokens=True) if isinstance(answer, dict) else tokenizer.decode(answer, skip_special_tokens=True)
+                decoded_generated_answers.append(decoded_answer)
+
+            # Decode the most deterministic answer
+            decoded_most_deterministic_answer = tokenizer.decode(most_deterministic_answer['sequences'][0], skip_special_tokens=True) if isinstance(most_deterministic_answer, dict) else tokenizer.decode(most_deterministic_answer, skip_special_tokens=True)
+
+            # Construct the p_true prompt
+            brainstormed_answers_str = ' | '.join(decoded_generated_answers)
+            prompt = (
+                f"Question: {question_concat}\n"
+                f"Brainstormed Answers: {brainstormed_answers_str}\n"
+                f"Possible answer: {decoded_most_deterministic_answer}\n"
+                "Is the possible answer:\n"
+                "A) True\n"
+                "B) False\n"
+                "The possible answer is:"
             )
-            all_ptrue_scores.append(p_true_score)
 
-        # Save results to dataset
-        dataset_copy = dataset_copy.add_column("p_true_scores", all_ptrue_scores)
-        dataset_copy.save_to_disk(data_ptrue_path + dataset_copy.info.description)
+
+            ##### Use only DEberta to compute p_true
+            # Compute p_true using the model's method
+            inputs = tokenizer(prompt, return_tensors='pt', truncation=True, padding=True).to(entailment_model.device)
+
+            # Forward pass through the DeBERTa model
+            with torch.no_grad():
+                outputs = entailment_model(**inputs)
+
+            # Get logits and apply softmax to obtain probabilities
+            logits = outputs.logits
+            probs = F.softmax(logits, dim=-1)
+
+            # Assuming the true label corresponds to index 0 (True) and false to index 1 (False)
+            p_true = probs[0, 0].item()  
+            p_true_values.append(p_true)
+
+        # Add the p_true column to the dataset
+        dataset_copy = dataset_copy.add_column('p_true', p_true_values)
+
+        # Save the updated dataset to disk
+        dataset_path = f"{save_path}/{dataset_copy.info.description}_updated"
+        dataset_copy.save_to_disk(dataset_path)
+        print(f"Dataset saved to {dataset_path}") 
+

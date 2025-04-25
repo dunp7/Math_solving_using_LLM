@@ -195,7 +195,7 @@ def calculate_mem_mean_std(datasets):
     return (mem_means, mem_stds)
 
 
-def metric_entail_models(model_results, metric):
+def metric_entail_models(model_results, metric, measure_flg = 1):
     """Computes various performance metrics or other properties for different entailment models and their respective 
        sizes across datasets.
     
@@ -213,7 +213,8 @@ def metric_entail_models(model_results, metric):
                                   },
                                   ...
                               }
-        metric (str): The metric/propertie that will be calculated ('AUROC', 'AURAC', 'AURAC %', 'F1', 'SE', 'MEMORY')
+        metric (str): The metric/propertie that will be calculated ('AUROC', 'AURAC', 'AURAC %', 'SE', 'MEMORY')
+        measure_flg (int): Flag to indicate if cal SE(1) or P-true(0)
 
     Returns:
         results (list): A list with the results from the selected metric/propertie  for each model and size combination,
