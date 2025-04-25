@@ -7,7 +7,7 @@ from my_utils.semantic_entropy import gen_responses_probs, cluster_responses, ca
 from my_utils.metrics import assess_acc_llm, assess_acc_SQuAD, assess_acc_gemini
 import time
 
-def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_model= None, acc_tokenizer = None ,intro_promt= None, acc_flg=0, api_key = None):
+def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_model= None, acc_tokenizer = None ,instruct_prompt= None, acc_flg=0, api_key = None):
     """Generates responses and accuracy labels for questions in multiple datasets using a specified language model
 
     Parameters:
@@ -23,9 +23,8 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_m
 
     
 
-    if not intro_promt: 
-        intro_promt = "Answer the following question in a single brief but complete sentence. "
-    print(intro_promt)
+    if not instruct_prompt: 
+        instruct_prompt = ""
     for dataset in datasets:
         all_responses = []
         all_acc_resp = []
@@ -35,7 +34,13 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_m
 
         for i in tqdm(range(len(dataset))):
             # Generate responses for Semantic Entropy and Accuracy
-            prompt = intro_promt + dataset[i]["question"]
+            prompt = f"""
+            {instruct_prompt}
+            Answer the following question in a single brief but complete sentence. 
+            Question: {dataset[i]["question"]}
+            Answer:
+            """
+            
             responses = gen_responses_probs(llm_model, llm_tokenizer, prompt)
             empty_cache()
             acc_response = gen_responses_probs(llm_model, llm_tokenizer, prompt, number_responses=1, temperature=0.1)
