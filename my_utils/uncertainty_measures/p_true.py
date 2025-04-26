@@ -79,7 +79,7 @@ def generate_p_true(datasets, entailment_model, entailment_tokenizer, gen_tokeni
         dataset_copy = dataset_copy.add_column('p_true', p_true_values)
 
         # Save the updated dataset to disk
-        dataset_path = f"{save_path}{dataset_copy.info.description}_updated"
+        dataset_path = f"{save_path}{dataset_copy.info.description}_pTrue"
         dataset_copy.save_to_disk(dataset_path)
         print(f"Dataset saved to {dataset_path}")
 
