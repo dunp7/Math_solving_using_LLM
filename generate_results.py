@@ -3,7 +3,7 @@
 from torch.cuda import empty_cache
 from tqdm import tqdm
 from copy import deepcopy
-from my_utils.semantic_entropy import gen_responses_probs, cluster_responses, calculate_sem_entr
+from my_utils.uncertainty_measures.semantic_entropy import gen_responses_probs, cluster_responses, calculate_sem_entr
 from my_utils.metrics import assess_acc_llm, assess_acc_SQuAD, assess_acc_gemini
 import time
 
