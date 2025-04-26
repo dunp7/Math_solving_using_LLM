@@ -242,6 +242,10 @@ def visualise_SE_mean_std(models_names, datasets_names, results, colours, locati
 
 def create_description_txt(gen_model, acc_model, prompt, sample, dataset, location= "results/"):
     "Create a description.txt for the result"
+        # Ensure the directory exists
+    if not os.path.exists(location):
+        os.makedirs(location)
+
     with open(f"{location}description.txt", "w") as f:
         f.write(f"Generated model: {gen_model}\n")
         f.write(f"Accuracy model: {acc_model}\n")
