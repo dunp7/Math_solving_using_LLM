@@ -9,13 +9,14 @@ from copy import deepcopy
 import torch.nn.functional as F
 import torch
 
-def calculate_p_true(datasets, entailment_model, entailment_tokenizer, tokenizer, save_path):
+
+def generate_p_true(datasets, entailment_model, entailment_tokenizer, gen_tokenizer, save_path):
     """
     Computes p_true for multiple datasets and saves the updated datasets, handling tokenized answers.
 
     Parameters:
         datasets (list): List of datasets to process.
-        tokenizer (AutoTokenizer): Tokenizer for decoding tokenized answers.
+        gen_tokenizer (AutoTokenizer): Tokenizer for decoding tokenized answers.
         save_path (str): Directory path to save updated datasets.
 
     Returns:
@@ -28,21 +29,24 @@ def calculate_p_true(datasets, entailment_model, entailment_tokenizer, tokenizer
         print(f"Processing dataset: {dataset_copy.info.description}")
         p_true_values = []
 
-        # Compute p_true for each row in the dataset
-        for row in tqdm(dataset_copy):
-            question_concat = row['question_concat']
-            generated_answers = row['generated_answers']
-            most_deterministic_answer = row['generated_answer_acc']
+         # Compute p_true for each row in the dataset using index
+        for idx in tqdm(range(len(dataset_copy))):
+            question_concat = dataset_copy[idx]['question_concat']
+            generated_answers = dataset_copy['generated_answers'][idx]['sequences']
 
-            # Decode tokenized answers (checking for possible nested structures)
+            # Decode the generated answers (list of token sequences)
             decoded_generated_answers = []
             for answer in generated_answers:
-                # In case 'answer' is a list of sequences, decode each
-                decoded_answer = tokenizer.decode(answer['sequences'][0], skip_special_tokens=True) if isinstance(answer, dict) else tokenizer.decode(answer, skip_special_tokens=True)
-                decoded_generated_answers.append(decoded_answer)
+                # If answer is a list of token IDs, decode them directly
+                if isinstance(answer, list):  
+                    decoded_answer = gen_tokenizer.decode(answer, skip_special_tokens=True)
+                    decoded_generated_answers.append(decoded_answer)
+                else:
+                    print("Unexpected format in generated_answers")
+                    continue
 
-            # Decode the most deterministic answer
-            decoded_most_deterministic_answer = tokenizer.decode(most_deterministic_answer['sequences'][0], skip_special_tokens=True) if isinstance(most_deterministic_answer, dict) else tokenizer.decode(most_deterministic_answer, skip_special_tokens=True)
+            # Select the most deterministic answer 
+            decoded_most_deterministic_answer = gen_tokenizer.decode(dataset_copy[idx]['generated_answer_acc']['sequences'][0], skip_special_tokens=True)
 
             # Construct the p_true prompt
             brainstormed_answers_str = ' | '.join(decoded_generated_answers)
@@ -56,10 +60,8 @@ def calculate_p_true(datasets, entailment_model, entailment_tokenizer, tokenizer
                 "The possible answer is:"
             )
 
-
-            ##### Use only DEberta to compute p_true
-            # Compute p_true using the model's method
-            inputs = tokenizer(prompt, return_tensors='pt', truncation=True, padding=True).to(entailment_model.device)
+            # Tokenize the prompt
+            inputs = entailment_tokenizer(prompt, return_tensors='pt', truncation=True, padding=True).to(entailment_model.device)
 
             # Forward pass through the DeBERTa model
             with torch.no_grad():
@@ -70,14 +72,14 @@ def calculate_p_true(datasets, entailment_model, entailment_tokenizer, tokenizer
             probs = F.softmax(logits, dim=-1)
 
             # Assuming the true label corresponds to index 0 (True) and false to index 1 (False)
-            p_true = probs[0, 0].item()  
+            p_true = probs[0, 0].item()  # Probability of being True
             p_true_values.append(p_true)
 
         # Add the p_true column to the dataset
         dataset_copy = dataset_copy.add_column('p_true', p_true_values)
 
         # Save the updated dataset to disk
-        dataset_path = f"{save_path}/{dataset_copy.info.description}_updated"
+        dataset_path = f"{save_path}{dataset_copy.info.description}_updated"
         dataset_copy.save_to_disk(dataset_path)
-        print(f"Dataset saved to {dataset_path}") 
+        print(f"Dataset saved to {dataset_path}")
 

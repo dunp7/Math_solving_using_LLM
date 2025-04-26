@@ -133,7 +133,8 @@ def calculate_aurac(datasets, flg = 0):
             y_score = np.array(d["semantic_entropy"])
         elif flg == 1: 
             y_score = np.array(d["p_true"]) 
-        y_score = np.array(d["semantic_entropy"])
+    
+
         labels = np.array(d["labels"])
 
         rejection_percentages = np.linspace(0.1, 1, 20)  
@@ -152,54 +153,6 @@ def calculate_aurac(datasets, flg = 0):
 
     return aurac_list, rej_acc_list
 
-
-
-def calculate_f1(datasets):
-    """Computes the F1 scores for each dataset
-
-    Parameters:
-        datasets (list): A list of datasets, where each dataset contains labels (binary ground-truth) and semantic 
-                         entropy values for the responses
-
-    Returns:
-        list: A list of F1 scores, one for each dataset
-    """
-
-    f1_list = []
-
-    for d in datasets:
-        y_true = 1-np.array(d["labels"])
-        y_pred = np.where(np.array(d["semantic_entropy"]) >= 0.5, 1, 0)
-        f1 = f1_score(y_true, y_pred)
-        f1_list.append(f1)
-        print(f"{d.info.description:20} dataset: {f1:8.4f}")
-
-    return f1_list
-
-
-def calculate_mem_mean_std(datasets):
-    """Computes mean and standard deviation (std) of memmeory allocation for each dataset
-
-    Parameters:
-        datasets (list): A list of datasets, where each dataset contains a list with memeory allocation  
-                         during clustering
-
-    Returns:
-        tuple: (A list with the memoery means, A list with the memoery stds) one for each dataset
-    """
-
-    mem_means = []
-    mem_stds =[]
-
-    for d in datasets:
-        d_MB = np.array(d["memory_allocation"])/1e6 # Bytes -> MB
-        mean = np.mean(d_MB)
-        std = np.std(d_MB)
-        print(f"{d.info.description:10} |  Mean: {mean:8.3f}    Std: {std:7.3f}")
-        mem_means.append(mean)
-        mem_stds.append(std)
-
-    return (mem_means, mem_stds)
 
 
 def metric_entail_models(model_results, metric, measure_flg = 0):
@@ -243,11 +196,8 @@ def metric_entail_models(model_results, metric, measure_flg = 0):
             elif metric == "SE":
                 results += [dataset["semantic_entropy"] for dataset in only_datasets]
                 continue
-            elif metric == "MEMORY":
-                print(f"\nMemory allocation in MB for {model.capitalize()} {size}")
-                result = calculate_mem_mean_std(only_datasets)
             else:
-                print(f"Please specify one of the following Metrics: 'AUROC', 'AURAC', 'SE', 'MEMORY'")
+                print(f"Please specify one of the following Metrics: 'AUROC', 'AURAC', 'SE'")
                 return
             
             results.append(result)
