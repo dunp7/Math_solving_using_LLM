@@ -53,7 +53,7 @@ def generate_PE(datasets, save_path):
         # Create a deep copy to avoid modifying the original dataset
         dataset_copy = deepcopy(dataset)
 
-        print(f"Processing dataset: {dataset_copy['info']['description']}") 
+        print(f"Processing dataset: {dataset_copy.info.description}") 
 
         # Calculate PE and LN_PE for the current dataset
         pe_values = calculate_PE(dataset_copy, length_normalized=False)  # PE 
