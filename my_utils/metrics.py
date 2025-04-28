@@ -78,7 +78,7 @@ def assess_acc_gemini(api_key, question, answer, response):
         return 0
 
 
-def calculate_auroc(datasets, measure_type='SE', save_path="auroc_results.txt", label_type="SQuAD"):
+def calculate_auroc(datasets, measure_type='SE', save_path="results/", label_type="SQuAD"):
     """
     Computes the AUROC for each dataset based on the chosen label type or majority voting.
 
@@ -90,6 +90,9 @@ def calculate_auroc(datasets, measure_type='SE', save_path="auroc_results.txt", 
         label_type (str): The type of label to use for y_true ('SQuAD', 'LLM', 'Gemini', or 'majority').
     """
     if not os.path.exists(save_path):
+        os.makedirs(save_path)  
+
+    if not os.path.exists(save_path + "AUROC"):
         with open(save_path, "w") as f:
             pass  # Create an empty file
 
@@ -148,7 +151,7 @@ def accuracy_at_quantile(accuracies, uncertainties, quantile):
     return np.mean(accuracies[select])
 
 
-def calculate_aurac(datasets, measure_type = 'SE', save_path = "aurac_results.txt", label_type = 'SQuAD'):
+def calculate_aurac(datasets, measure_type = 'SE', save_path = "results/", label_type = 'SQuAD'):
     """Computes the AURAC for each dataset
 
     Parameters:
@@ -158,7 +161,11 @@ def calculate_aurac(datasets, measure_type = 'SE', save_path = "aurac_results.tx
     Returns:
         list: A list of AURAC scores, one for each dataset
     """
+
     if not os.path.exists(save_path):
+        os.makedirs(save_path)  
+
+    if not os.path.exists(save_path + "AURAC"):
         with open(save_path, "w") as f:
             pass  # Create an empty file
     aurac_list = []
