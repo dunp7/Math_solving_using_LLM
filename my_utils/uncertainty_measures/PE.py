@@ -2,7 +2,7 @@
 Generate Predictive Entropy (PE) and Length_normalized PE (Ln-PE)
 
 """
-import tqdm
+from tqdm import tqdm
 import numpy as np
 from copy import deepcopy
 

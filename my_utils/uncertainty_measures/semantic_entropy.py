@@ -2,7 +2,7 @@
 
 import torch
 import numpy as np
-import tqdm
+from tqdm import tqdm
 from copy import deepcopy
 from torch.cuda import empty_cache
 
