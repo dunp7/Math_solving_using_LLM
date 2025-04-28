@@ -130,12 +130,13 @@ def calculate_auroc(datasets, measure_type='SE', save_path="auroc_results.txt", 
         auroc = metrics.auc(fpr, tpr)
 
         auroc_list.append(auroc)
-        result = f"{d.info.description:20} {measure_type:10} {label_type:10} dataset: {auroc:8.4f}"
+        result = f"{d.info.description}-{measure_type:20} {label_type:10} dataset: {auroc:8.4f}"
         print(result)
         results.append(result)
 
     # Save results to a .txt file
     with open(save_path, "a") as f:
+        f.write('\n')
         f.write("\n".join(results))
 
 
@@ -204,10 +205,11 @@ def calculate_aurac(datasets, measure_type = 'SE', save_path = "aurac_results.tx
         dx = rejection_percentages[1] - rejection_percentages[0]
         aurac = np.sum(np.array(rej_acc) * dx)  
         aurac_list.append(aurac)
-        result = f"{d.info.description:20} {measure_type:10} dataset: {aurac:8.4f}"
+        result = f"{d.info.description}-{measure_type:20} dataset: {aurac:8.4f}"
         print(result)
         results.append(result)
     
     # Save results to a .txt file
-    with open(save_path, "w") as f:
+    with open(save_path, "a") as f:
+        f.write('\n')
         f.write("\n".join(results))
