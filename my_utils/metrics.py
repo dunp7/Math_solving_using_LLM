@@ -78,38 +78,59 @@ def assess_acc_gemini(api_key, question, answer, response):
         return 0
 
 
-def calculate_auroc(datasets, measure_type= 'SE', save_path = "auroc_results.txt"):
-    """Computes the AUROC for each dataset
+def calculate_auroc(datasets, measure_type='SE', save_path="auroc_results.txt", label_type="SQuAD"):
+    """
+    Computes the AUROC for each dataset based on the chosen label type or majority voting.
 
     Parameters:
-        datasets (list): A list of datasets, where each dataset contains labels (binary ground-truth) and semantic 
-                         entropy values for the responses
-
-
+        datasets (list): A list of datasets, where each dataset contains labels (binary ground-truth) and semantic
+                         entropy values for the responses.
+        measure_type (str): The type of measure to use for scores ('SE', 'p_true', 'PE', 'Ln-PE').
+        save_path (str): The path to save the AUROC results.
+        label_type (str): The type of label to use for y_true ('SQuAD', 'LLM', 'Gemini', or 'majority').
     """
     if not os.path.exists(save_path):
         with open(save_path, "w") as f:
             pass  # Create an empty file
+
     auroc_list = []
     results = []
-    for d in datasets:
-        y_true = np.array(d["labels"])  
 
+    for d in datasets:
+        # Select labels based on label_type
+        if label_type == "SQuAD":
+            y_true = np.array(d["labels_SQuAD"])
+        elif label_type == "LLM":
+            y_true = np.array(d["labels_LLM"])
+        elif label_type == "Gemini":
+            y_true = np.array(d["labels_Gemini"])
+        elif label_type == "majority":
+            # Majority vote logic (consider 1 if more than 2 labels are 1, otherwise 0)
+            y_true = np.array([
+                1 if sum([d["labels_SQuAD"][i], d["labels_LLM"][i], d["labels_Gemini"][i]]) >= 2 else 0
+                for i in range(len(d["labels_SQuAD"]))
+            ])
+        else:
+            raise ValueError(f"Invalid label_type: {label_type}. Choose 'SQuAD', 'LLM', 'Gemini', or 'majority'.")
+
+        # Select measure scores
         if measure_type == 'SE':
             y_score = np.array(d["semantic_entropy"])
-        elif measure_type == 'p_true': 
-            y_score = np.array(d["p_true"]) 
+        elif measure_type == 'p_true':
+            y_score = np.array(d["p_true"])
         elif measure_type == 'PE':
             y_score = np.array(d["PE"])
         elif measure_type == 'Ln-PE':
             y_score = np.array(d["Ln-PE"])
+        else:
+            raise ValueError(f"Invalid measure_type: {measure_type}. Choose 'SE', 'p_true', 'PE', or 'Ln-PE'.")
 
-        # Compute ROC curve
+        # Compute ROC curve and AUROC
         fpr, tpr, _ = metrics.roc_curve(y_true, y_score)
         auroc = metrics.auc(fpr, tpr)
 
         auroc_list.append(auroc)
-        result = f"{d.info.description:20} {measure_type:10} dataset: {auroc:8.4f}"
+        result = f"{d.info.description:20} {measure_type:10} {label_type:10} dataset: {auroc:8.4f}"
         print(result)
         results.append(result)
 
@@ -119,13 +140,14 @@ def calculate_auroc(datasets, measure_type= 'SE', save_path = "auroc_results.txt
 
 
 
+
 def accuracy_at_quantile(accuracies, uncertainties, quantile):
     cutoff = np.quantile(uncertainties, quantile)
     select = uncertainties <= cutoff
     return np.mean(accuracies[select])
 
 
-def calculate_aurac(datasets, measure_type = 'SE', save_path = "aurac_results.txt"):
+def calculate_aurac(datasets, measure_type = 'SE', save_path = "aurac_results.txt", label_type = 'SQuAD'):
     """Computes the AURAC for each dataset
 
     Parameters:
@@ -143,17 +165,33 @@ def calculate_aurac(datasets, measure_type = 'SE', save_path = "aurac_results.tx
     results = []
     for d in datasets:
 
+        # Select labels based on label_type
+        if label_type == "SQuAD":
+            labels = np.array(d["labels_SQuAD"])
+        elif label_type == "LLM":
+            labels = np.array(d["labels_LLM"])
+        elif label_type == "Gemini":
+            labels = np.array(d["labels_Gemini"])
+        elif label_type == "majority":
+            # Majority vote logic (consider 1 if more than 2 labels are 1, otherwise 0)
+            labels = np.array([
+                1 if sum([d["labels_SQuAD"][i], d["labels_LLM"][i], d["labels_Gemini"][i]]) >= 2 else 0
+                for i in range(len(d["labels_SQuAD"]))
+            ])
+        else:
+            raise ValueError(f"Invalid label_type: {label_type}. Choose 'SQuAD', 'LLM', 'Gemini', or 'majority'.")
+
+        # Select measure scores
         if measure_type == 'SE':
             y_score = np.array(d["semantic_entropy"])
-        elif measure_type == 'p_true': 
-            y_score = np.array(d["p_true"]) 
+        elif measure_type == 'p_true':
+            y_score = np.array(d["p_true"])
         elif measure_type == 'PE':
             y_score = np.array(d["PE"])
         elif measure_type == 'Ln-PE':
             y_score = np.array(d["Ln-PE"])
-    
-
-        labels = np.array(d["labels"])
+        else:
+            raise ValueError(f"Invalid measure_type: {measure_type}. Choose 'SE', 'p_true', 'PE', or 'Ln-PE'.")
 
         rejection_percentages = np.linspace(0.1, 1, 20)  
         rej_acc = [
