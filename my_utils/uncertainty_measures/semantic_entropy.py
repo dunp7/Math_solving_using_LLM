@@ -1,63 +1,52 @@
 """Semantic Entropy Utilities."""
 
 import torch
-import torch.nn.functional as F
 import numpy as np
-from numpy.linalg import norm
+import tqdm
+from copy import deepcopy
+from torch.cuda import empty_cache
 
 
-def gen_responses_probs(model, tokenizer, question, number_responses=10, temperature=1.0):
-    """ Generates 10 responses with high temeperature
+def generate_SE(datasets, data_entail_path, llm_tokenizer, entail_model, entail_tokenizer, entail_function):
+    """Computes Semantic Entropy (SE) and clusters responses for questions in multiple datasets
 
     Parameters:
-        model (AutoModelForCausalLM): The language generation model
-        tokenizer (AutoTokenizer): The tokenizer for the model
-        question (str): The input question to generate responses for
-        number_responses (int): The number of responses to generate, default 10
-        number_responses (float): The number used to modulate the next token probabilities, default 1.0
+        datasets (list): A list of datasets, where each dataset contains questions and previously generated answers
+        data_entail_path (str): The directory path where the updated datasets with SE and clusters will be saved
+        llm_tokenizer (AutoTokenizer): The tokenizer for decoding responses
+        entail_model (AutoModelForSequenceClassification or AutoModelForCausalLM): The model used for entailment evaluation
+        entail_tokenizer (AutoTokenizer): The tokenizer associated with the entailment model
+        entail_function (function): Fuction that will be used to assess bidirectional entailment
 
     Returns:
-        dict: The deafult dictionary returned from generate() with token and sequence probabilities
+        None: The results are directly saved to disk
     """
 
-    input_ids = tokenizer(question, return_tensors="pt").to(model.device)
-    input_length = input_ids['input_ids'].shape[1]
+    for dataset in datasets:
+        all_clusters = []
+        all_sem_entr = []
+        all_mem_alloc = []
+        dataset_copy = deepcopy(dataset)
 
-    outputs_high_temp = model.generate(
-        **input_ids,
-        max_new_tokens=128,
-        return_dict_in_generate=True,
-        output_scores=True,
-        do_sample=True,
-        top_k=50,                  # top-K sampling
-        top_p=0.9,                 # nucleus sampling
-        temperature=temperature,
-        num_return_sequences=number_responses
-    )
+        print(f"\nGenerating Semantic Entropies for {dataset_copy.info.description} dataset...")
 
-    sequence_token_probabilities = []
-    generated_answer_tokens = []
-    for idx in range(number_responses):
-        # Only keep the generated tokens by slicing out the input question tokens
-        generated_tokens = outputs_high_temp.sequences[idx, input_length:] 
-        generated_answer_tokens.append(generated_tokens.cpu().tolist())
-        
-        # Calculate probabilities for each token in the generated response
-        probabilities = [F.softmax(score, dim=-1) for score in outputs_high_temp.scores] 
-        token_probabilities = []
-        for i, token_id in enumerate(generated_tokens):
-            token_prob = probabilities[i][idx, token_id].item()  # [idx, token_id] for batch dimension
-            if token_prob > 0:
-                token_probabilities.append(token_prob)
-        sequence_token_probabilities.append(token_probabilities)
+        for i in tqdm(range(len(dataset_copy))):
+            # Calculate semantic entropy
+            clusters, memory = cluster_responses(dataset_copy[i]["generated_answers"], llm_tokenizer, entail_function, 
+                                                 entail_model, entail_tokenizer, question=dataset_copy[i]["question"])
+            empty_cache()
+            sem_entr = calculate_sem_entr(clusters, dataset_copy[i]["generated_answers"]["sequences_probabilities"])
+            all_clusters.append(clusters)
+            all_sem_entr.append(sem_entr)
+            all_mem_alloc.append(memory)
 
-    outputs = {
-        "sequences": generated_answer_tokens,
-        # "tokens_probabilities": sequence_token_probabilities,
-        "sequences_probabilities": [-np.sum(np.log(prob)) / len(prob) for prob in sequence_token_probabilities], 
-    }
+        # Save results to dataset
+        dataset_copy = dataset_copy.add_column("clusters", all_clusters)
+        dataset_copy = dataset_copy.add_column("semantic_entropy", all_sem_entr)
+        dataset_copy = dataset_copy.add_column("memory_allocation", all_mem_alloc)
+        dataset_copy.save_to_disk(data_entail_path + dataset_copy.info.description) 
 
-    return outputs
+
 
 
 def mean_pooling(model_output, attention_mask):

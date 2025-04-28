@@ -20,8 +20,8 @@ def calculate_PE(dataset, length_normalized=False):
     """
     pe_values = []
 
-    for example in tqdm(dataset, desc="Calculating PE"):
-        sequence_token_probs = example['equences_probabilities']  
+    for i in tqdm(range(len(dataset)), desc="Calculating PE"):
+        sequence_token_probs = dataset[i]["generated_answers"]["sequences_probabilities"]
         pe_value = 0
         
         # Calculate PE as -sum(p log(p)) for each token in the sequence
@@ -56,17 +56,17 @@ def generate_PE(datasets, save_path):
         print(f"Processing dataset: {dataset_copy['info']['description']}") 
 
         # Calculate PE and LN_PE for the current dataset
-        pe_values = calculate_PE(dataset['data'], length_normalized=False)  # PE 
-        ln_pe_values = calculate_PE(dataset['data'], length_normalized=True)  # LN_PE 
+        pe_values = calculate_PE(dataset_copy, length_normalized=False)  # PE 
+        ln_pe_values = calculate_PE(dataset_copy, length_normalized=True)  # LN_PE 
 
 
         # Add 2 PE measures column to the dataset
         dataset_copy = dataset_copy.add_column('PE', pe_values)
-        dataset_copy = dataset_copy.add_column('LN_PE', ln_pe_values)
+        dataset_copy = dataset_copy.add_column('Ln-PE', ln_pe_values)
 
 
         # Save the updated dataset to disk
-        dataset_path = f"{save_path}{dataset_copy.info.description}_PE"
+        dataset_path = f"{save_path}{dataset_copy.info.description}"
         dataset_copy.save_to_disk(dataset_path)
         print(f"Dataset saved to {dataset_path}")
 

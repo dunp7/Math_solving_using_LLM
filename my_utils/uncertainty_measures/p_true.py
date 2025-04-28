@@ -23,14 +23,14 @@ def generate_p_true(datasets, entailment_model, entailment_tokenizer, gen_tokeni
         None: Updated datasets are saved to disk.
     """
     for dataset in datasets:
-        # Create a deep copy to avoid modifying the original dataset
+
         dataset_copy = deepcopy(dataset)
 
         print(f"Processing dataset: {dataset_copy.info.description}")
         p_true_values = []
 
          # Compute p_true for each row in the dataset using index
-        for idx in tqdm(range(len(dataset_copy))):
+        for idx in tqdm(range(len(dataset_copy)), desc= "Calculating P(True)"):
             question_concat = dataset_copy[idx]['question_concat']
             generated_answers = dataset_copy['generated_answers'][idx]['sequences']
 
@@ -79,7 +79,7 @@ def generate_p_true(datasets, entailment_model, entailment_tokenizer, gen_tokeni
         dataset_copy = dataset_copy.add_column('p_true', p_true_values)
 
         # Save the updated dataset to disk
-        dataset_path = f"{save_path}{dataset_copy.info.description}_pTrue"
+        dataset_path = f"{save_path}{dataset_copy.info.description}"
         dataset_copy.save_to_disk(dataset_path)
         print(f"Dataset saved to {dataset_path}")
 

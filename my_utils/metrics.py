@@ -1,10 +1,10 @@
 """Calculate metrics"""
 
 import numpy as np
-from sklearn.metrics import f1_score
 from sklearn import metrics
 from torchmetrics.text import SQuAD 
 from google import genai
+import os
 
 def assess_acc_SQuAD(response, answer):
     """Assesses the semantic equivalence between a proposed response and the expected answer for a given question
@@ -78,33 +78,45 @@ def assess_acc_gemini(api_key, question, answer, response):
         return 0
 
 
-def calculate_auroc(datasets, flg = 0):
+def calculate_auroc(datasets, measure_type= 'SE', save_path = "auroc_results.txt"):
     """Computes the AUROC for each dataset
 
     Parameters:
         datasets (list): A list of datasets, where each dataset contains labels (binary ground-truth) and semantic 
                          entropy values for the responses
 
-    Returns:
-        list: A list of AUROC scores, one for each dataset
-    """
 
+    """
+    if not os.path.exists(save_path):
+        with open(save_path, "w") as f:
+            pass  # Create an empty file
     auroc_list = []
+    results = []
     for d in datasets:
         y_true = np.array(d["labels"])  
 
-        if flg == 0:
+        if measure_type == 'SE':
             y_score = np.array(d["semantic_entropy"])
-        elif flg == 1: 
+        elif measure_type == 'p_true': 
             y_score = np.array(d["p_true"]) 
+        elif measure_type == 'PE':
+            y_score = np.array(d["PE"])
+        elif measure_type == 'Ln-PE':
+            y_score = np.array(d["Ln-PE"])
+
         # Compute ROC curve
         fpr, tpr, _ = metrics.roc_curve(y_true, y_score)
         auroc = metrics.auc(fpr, tpr)
 
         auroc_list.append(auroc)
-        print(f"{d.info.description:20} dataset: {auroc:8.4f}")
+        result = f"{d.info.description:20} {measure_type:10} dataset: {auroc:8.4f}"
+        print(result)
+        results.append(result)
 
-    return auroc_list
+    # Save results to a .txt file
+    with open(save_path, "a") as f:
+        f.write("\n".join(results))
+
 
 
 def accuracy_at_quantile(accuracies, uncertainties, quantile):
@@ -113,7 +125,7 @@ def accuracy_at_quantile(accuracies, uncertainties, quantile):
     return np.mean(accuracies[select])
 
 
-def calculate_aurac(datasets, flg = 0):
+def calculate_aurac(datasets, measure_type = 'SE', save_path = "aurac_results.txt"):
     """Computes the AURAC for each dataset
 
     Parameters:
@@ -123,16 +135,22 @@ def calculate_aurac(datasets, flg = 0):
     Returns:
         list: A list of AURAC scores, one for each dataset
     """
-
+    if not os.path.exists(save_path):
+        with open(save_path, "w") as f:
+            pass  # Create an empty file
     aurac_list = []
     rej_acc_list = []
-
+    results = []
     for d in datasets:
 
-        if flg == 0:
+        if measure_type == 'SE':
             y_score = np.array(d["semantic_entropy"])
-        elif flg == 1: 
+        elif measure_type == 'p_true': 
             y_score = np.array(d["p_true"]) 
+        elif measure_type == 'PE':
+            y_score = np.array(d["PE"])
+        elif measure_type == 'Ln-PE':
+            y_score = np.array(d["Ln-PE"])
     
 
         labels = np.array(d["labels"])
@@ -148,58 +166,10 @@ def calculate_aurac(datasets, flg = 0):
         dx = rejection_percentages[1] - rejection_percentages[0]
         aurac = np.sum(np.array(rej_acc) * dx)  
         aurac_list.append(aurac)
-
-        print(f"{d.info.description:20} dataset: {aurac:8.4f}")
-
-    return aurac_list, rej_acc_list
-
-
-
-def metric_entail_models(model_results, metric, measure_flg = 0):
-    """Computes various performance metrics or other properties for different entailment models and their respective 
-       sizes across datasets.
+        result = f"{d.info.description:20} {measure_type:10} dataset: {aurac:8.4f}"
+        print(result)
+        results.append(result)
     
-    Parameters:
-        model_results (dict): A nested dictionary containing results for various models and their sizes
-                              Structure example:
-                              {
-                                  "model1": {
-                                      "0.5B": [{dataset_name: dataset_object}, ...],
-                                      "3.0B": [{dataset_name: dataset_object}, ...],
-                                  },
-                                  "model2": {
-                                      "14.0B": [{dataset_name: dataset_object}, ...],
-                                      "30.0B": [{dataset_name: dataset_object}, ...],
-                                  },
-                                  ...
-                              }
-        metric (str): The metric/propertie that will be calculated ('AUROC', 'AURAC', 'AURAC %', 'SE', 'MEMORY')
-        measure_flg (int): Flag to indicate if cal SE(1) or P-true(0)
-
-    Returns:
-        results (list): A list with the results from the selected metric/propertie  for each model and size combination,
-                        computed across datasets
-    """
-
-    results = []
-
-    for model in model_results.keys():
-        for size in model_results[model].keys():
-            only_datasets = [list(item.values())[0] for item in model_results[model][size]]
-
-            if metric == "AUROC":
-                print(f"\nAUROC scores for {model.capitalize()} {size}")
-                result = calculate_auroc(only_datasets, measure_flg)
-            elif metric == "AURAC":
-                print(f"\nAURAC scores for {model.capitalize()} {size}")
-                result = calculate_aurac(only_datasets, measure_flg)[0]
-            elif metric == "SE":
-                results += [dataset["semantic_entropy"] for dataset in only_datasets]
-                continue
-            else:
-                print(f"Please specify one of the following Metrics: 'AUROC', 'AURAC', 'SE'")
-                return
-            
-            results.append(result)
-    
-    return results
+    # Save results to a .txt file
+    with open(save_path, "w") as f:
+        f.write("\n".join(results))

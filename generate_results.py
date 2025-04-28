@@ -3,11 +3,61 @@
 from torch.cuda import empty_cache
 from tqdm import tqdm
 from copy import deepcopy
-from my_utils.uncertainty_measures.semantic_entropy import gen_responses_probs, cluster_responses, calculate_sem_entr
 from my_utils.metrics import assess_acc_llm, assess_acc_SQuAD, assess_acc_gemini
 import time
+import torch.nn.functional as F
+import numpy as np
 
-def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_model= None, acc_tokenizer = None ,instruct_prompt= None, acc_flg=0, api_key = None):
+
+def generate_labels(datasets, gen_tokenizer, save_path ,acc_model=None, acc_tokenizer=None, api_key=None):
+    """
+    Determines the label for the accuracy of the generated response.
+
+    Parameters:
+        datasets (dict): A single dataset item containing the question and ground-truth answer
+        acc_response_text (str): The generated response for accuracy evaluation
+        acc_model (Optional): The accuracy evaluation model (used if acc_flg is 1)
+        acc_tokenizer (Optional): The tokenizer associated with the accuracy evaluation model (used if acc_flg is 1)
+        api_key (Optional): API key for Gemini (used if acc_flg is 2)
+
+    Returns:
+        label (Any): The evaluated label for the response accuracy
+    """
+    for dataset in datasets:
+        labels_SQuAD = []
+        labels_LLM = []
+        labels_Gemini = []
+        dataset_copy = deepcopy(dataset)
+
+        for i in tqdm(range(len(dataset_copy)), desc="Generating Label"):
+
+            acc_response_text = gen_tokenizer.decode(dataset_copy['generated_answer_acc'][i]["sequences"][0], skip_special_tokens=True)
+            empty_cache()
+            # F1 from SQuAD
+            label_SQuAD = assess_acc_SQuAD(str(dataset_copy[i]["answers"]["text"]), acc_response_text)
+
+            # LLM
+            label_LLM = assess_acc_llm(acc_model, acc_tokenizer, dataset_copy[i]["question"], str(dataset_copy[i]["answers"]["text"]), acc_response_text)
+
+            # Gemini API
+            label_Gemini = assess_acc_gemini(api_key, dataset_copy[i]["question"], str(dataset_copy[i]["answers"]["text"]), acc_response_text)
+            time.sleep(3)
+
+            empty_cache()
+            labels_SQuAD.append(label_SQuAD)
+            labels_LLM.append(label_LLM)
+            labels_Gemini.append(label_Gemini)
+
+
+        # Save results to dataset
+        dataset = dataset.add_column("labels_SQuAD", labels_SQuAD)
+        dataset = dataset.add_column("labels_LLM", labels_LLM)
+        dataset = dataset.add_column("labels_Gemini", labels_Gemini)
+        dataset.save_to_disk(save_path+ dataset.info.description)  
+
+
+
+def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, instruct_prompt= None):
     """Generates responses and accuracy labels for questions in multiple datasets using a specified language model
 
     Parameters:
@@ -28,11 +78,10 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_m
     for dataset in datasets:
         all_responses = []
         all_acc_resp = []
-        all_labels = []
 
         print(f"\nGenerating responses for {dataset.info.description} dataset...")
 
-        for i in tqdm(range(len(dataset))):
+        for i in tqdm(range(len(dataset)), desc= "Generating Answers"):
             # Generate responses for Semantic Entropy and Accuracy
             prompt = f"""
             {instruct_prompt}.\n Answer the following question in a single brief but complete sentence.
@@ -44,62 +93,64 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer,acc_m
             empty_cache()
             acc_response = gen_responses_probs(llm_model, llm_tokenizer, prompt, number_responses=1, temperature=0.1)
             empty_cache()
-            acc_response_text = llm_tokenizer.decode(acc_response["sequences"][0], skip_special_tokens=True)
-            empty_cache()
-            if acc_flg == 0:
-                label = assess_acc_SQuAD(str(dataset[i]["answers"]["text"]), acc_response_text)
-            elif acc_flg == 1:
-                label = assess_acc_llm(acc_model, acc_tokenizer, dataset[i]["question"], str(dataset[i]["answers"]["text"]), acc_response_text)
-            elif acc_flg == 2:
-                label = assess_acc_gemini(api_key, dataset[i]["question"], str(dataset[i]["answers"]["text"]), acc_response_text)
-                time.sleep(3)
-            empty_cache()
             all_responses.append(responses)
             all_acc_resp.append(acc_response)
-            all_labels.append(label)
-            
+      
         # Save results to dataset
         dataset = dataset.add_column("generated_answers", all_responses)
         dataset = dataset.add_column("generated_answer_acc", all_acc_resp)
-        dataset = dataset.add_column("labels", all_labels)
         dataset.save_to_disk(data_answers_path + dataset.info.description)  
 
 
-def generate_SE(datasets, data_entail_path, llm_tokenizer, entail_model, entail_tokenizer, entail_function):
-    """Computes Semantic Entropy (SE) and clusters responses for questions in multiple datasets
+def gen_responses_probs(model, tokenizer, question, number_responses=10, temperature=1.0):
+    """ Generates 10 responses with high temeperature
 
     Parameters:
-        datasets (list): A list of datasets, where each dataset contains questions and previously generated answers
-        data_entail_path (str): The directory path where the updated datasets with SE and clusters will be saved
-        llm_tokenizer (AutoTokenizer): The tokenizer for decoding responses
-        entail_model (AutoModelForSequenceClassification or AutoModelForCausalLM): The model used for entailment evaluation
-        entail_tokenizer (AutoTokenizer): The tokenizer associated with the entailment model
-        entail_function (function): Fuction that will be used to assess bidirectional entailment
+        model (AutoModelForCausalLM): The language generation model
+        tokenizer (AutoTokenizer): The tokenizer for the model
+        question (str): The input question to generate responses for
+        number_responses (int): The number of responses to generate, default 10
+        number_responses (float): The number used to modulate the next token probabilities, default 1.0
 
     Returns:
-        None: The results are directly saved to disk
+        dict: The deafult dictionary returned from generate() with token and sequence probabilities
     """
 
-    for dataset in datasets:
-        all_clusters = []
-        all_sem_entr = []
-        all_mem_alloc = []
-        dataset_copy = deepcopy(dataset)
+    input_ids = tokenizer(question, return_tensors="pt").to(model.device)
+    input_length = input_ids['input_ids'].shape[1]
 
-        print(f"\nGenerating Semantic Entropies for {dataset_copy.info.description} dataset...")
+    outputs_high_temp = model.generate(
+        **input_ids,
+        max_new_tokens=128,
+        return_dict_in_generate=True,
+        output_scores=True,
+        do_sample=True,
+        top_k=50,                  # top-K sampling
+        top_p=0.9,                 # nucleus sampling
+        temperature=temperature,
+        num_return_sequences=number_responses
+    )
 
-        for i in tqdm(range(len(dataset_copy))):
-            # Calculate semantic entropy
-            clusters, memory = cluster_responses(dataset_copy[i]["generated_answers"], llm_tokenizer, entail_function, 
-                                                 entail_model, entail_tokenizer, question=dataset_copy[i]["question"])
-            empty_cache()
-            sem_entr = calculate_sem_entr(clusters, dataset_copy[i]["generated_answers"]["sequences_probabilities"])
-            all_clusters.append(clusters)
-            all_sem_entr.append(sem_entr)
-            all_mem_alloc.append(memory)
+    sequence_token_probabilities = []
+    generated_answer_tokens = []
+    for idx in range(number_responses):
+        # Only keep the generated tokens by slicing out the input question tokens
+        generated_tokens = outputs_high_temp.sequences[idx, input_length:] 
+        generated_answer_tokens.append(generated_tokens.cpu().tolist())
+        
+        # Calculate probabilities for each token in the generated response
+        probabilities = [F.softmax(score, dim=-1) for score in outputs_high_temp.scores] 
+        token_probabilities = []
+        for i, token_id in enumerate(generated_tokens):
+            token_prob = probabilities[i][idx, token_id].item()  # [idx, token_id] for batch dimension
+            if token_prob > 0:
+                token_probabilities.append(token_prob)
+        sequence_token_probabilities.append(token_probabilities)
 
-        # Save results to dataset
-        dataset_copy = dataset_copy.add_column("clusters", all_clusters)
-        dataset_copy = dataset_copy.add_column("semantic_entropy", all_sem_entr)
-        dataset_copy = dataset_copy.add_column("memory_allocation", all_mem_alloc)
-        dataset_copy.save_to_disk(data_entail_path + dataset_copy.info.description) 
+    outputs = {
+        "sequences": generated_answer_tokens,
+        # "tokens_probabilities": sequence_token_probabilities,
+        "sequences_probabilities": [-np.sum(np.log(prob)) / len(prob) for prob in sequence_token_probabilities], 
+    }
+
+    return outputs
