@@ -141,7 +141,8 @@ def calculate_auroc(datasets, measure_type='SE', save_path="results/", label_typ
     with open(save_path, "a") as f:
         f.write('\n')
         f.write("\n".join(results))
-
+    
+    return auroc_list
 
 
 
@@ -220,3 +221,5 @@ def calculate_aurac(datasets, measure_type = 'SE', save_path = "results/", label
     with open(save_path, "a") as f:
         f.write('\n')
         f.write("\n".join(results))
+
+    return aurac_list
