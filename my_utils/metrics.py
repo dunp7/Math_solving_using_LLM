@@ -6,15 +6,15 @@ from torchmetrics.text import SQuAD
 from google import genai
 import os
 
-def assess_acc_SQuAD(response, answer):
+def assess_acc_SQuAD(pred, target):
     """Assesses the semantic equivalence between a proposed response and the expected answer for a given question
     """
-    answer = [{"answers": {"text": [answer]}, "id": "1"}] # Target
-    response = [{"prediction_text": response, "id": "1"}] # Prediction
+    target = [{"answers": {"text": [target]}, "id": "1"}] # Target
+    pred = [{"prediction_text": pred, "id": "1"}] # Prediction
     
 
     squad_metric = SQuAD()
-    metrics = squad_metric(response, answer)
+    metrics = squad_metric(pred, target)
     f1_scores = metrics['f1']
  
     return 1 if f1_scores > 0.5 else 0
@@ -72,7 +72,7 @@ def assess_acc_gemini(api_key, question, answer, response):
         model="gemini-2.0-flash",
         contents=prompt,
     )
-    if "yes" in response.text.lower():
+    if "yes" in response.text.lower():  
         return 1
     else:
         return 0

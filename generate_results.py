@@ -34,7 +34,7 @@ def generate_labels(datasets, gen_tokenizer, save_path ,acc_model=None, acc_toke
             acc_response_text = gen_tokenizer.decode(dataset_copy['generated_answer_acc'][i]["sequences"][0], skip_special_tokens=True)
             empty_cache()
             # F1 from SQuAD
-            label_SQuAD = assess_acc_SQuAD(str(dataset_copy[i]["answers"]["text"]), acc_response_text)
+            label_SQuAD = assess_acc_SQuAD(acc_response_text, str(dataset_copy[i]["answers"]["text"]))
 
             # LLM
             label_LLM = assess_acc_llm(acc_model, acc_tokenizer, dataset_copy[i]["question"], str(dataset_copy[i]["answers"]["text"]), acc_response_text)
