@@ -7,7 +7,7 @@ from copy import deepcopy
 from torch.cuda import empty_cache
 
 
-def generate_SE(datasets, data_entail_path, llm_tokenizer, entail_model, entail_tokenizer, entail_function):
+def generate_SE(datasets, data_entail_path, llm_tokenizer, entail_model, entail_tokenizer):
     """Computes Semantic Entropy (SE) and clusters responses for questions in multiple datasets
 
     Parameters:

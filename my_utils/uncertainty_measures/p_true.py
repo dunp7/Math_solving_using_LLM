@@ -10,7 +10,7 @@ import torch.nn.functional as F
 import torch
 
 
-def generate_p_true(datasets, entailment_model, entailment_tokenizer, gen_tokenizer, save_path):
+def generate_p_true(datasets, save_path ,entailment_model, entailment_tokenizer, gen_tokenizer):
     """
     Computes p_true for multiple datasets and saves the updated datasets, handling tokenized answers.
 

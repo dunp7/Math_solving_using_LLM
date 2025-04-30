@@ -37,7 +37,7 @@ def calculate_PE(dataset, length_normalized=False):
     return pe_values
 
 
-def generate_PE(datasets, save_path):
+def generate_PE(datasets, save_path, llm_tokenizer= None, entail_model= None, entail_tokenizer= None):
     """
     Generate both PE (Predictive Entropy) and LN_PE (Length Normalized Predictive Entropy) for multiple datasets.
 
