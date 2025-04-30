@@ -34,25 +34,25 @@ def generate_labels(datasets, gen_tokenizer, save_path ,acc_model=None, acc_toke
             acc_response_text = gen_tokenizer.decode(dataset_copy['generated_answer_acc'][i]["sequences"][0], skip_special_tokens=True)
             empty_cache()
             # F1 from SQuAD
-            label_SQuAD = assess_acc_SQuAD(acc_response_text, str(dataset_copy[i]["answers"]["text"]))
+            label_SQuAD = assess_acc_SQuAD(acc_response_text, str(dataset_copy[i]["answers"]["text"][0]))
 
             # LLM
-            label_LLM = assess_acc_llm(acc_model, acc_tokenizer, dataset_copy[i]["question"], str(dataset_copy[i]["answers"]["text"]), acc_response_text)
+            label_LLM = assess_acc_llm(acc_model, acc_tokenizer, dataset_copy[i]["question"], str(dataset_copy[i]["answers"]["text"][0]), acc_response_text)
 
             # Gemini API
-            label_Gemini = assess_acc_gemini(api_key, dataset_copy[i]["question"], str(dataset_copy[i]["answers"]["text"]), acc_response_text)
-            time.sleep(3)
+            # label_Gemini = assess_acc_gemini(api_key, dataset_copy[i]["question"], str(dataset_copy[i]["answers"]["text"]), acc_response_text)
+            # time.sleep(3)
 
             empty_cache()
             labels_SQuAD.append(label_SQuAD)
             labels_LLM.append(label_LLM)
-            labels_Gemini.append(label_Gemini)
+            # labels_Gemini.append(label_Gemini)
 
 
         # Save results to dataset
         dataset = dataset.add_column("labels_SQuAD", labels_SQuAD)
         dataset = dataset.add_column("labels_LLM", labels_LLM)
-        dataset = dataset.add_column("labels_Gemini", labels_Gemini)
+        # dataset = dataset.add_column("labels_Gemini", labels_Gemini)
         dataset.save_to_disk(save_path+ dataset.info.description)  
 
 
