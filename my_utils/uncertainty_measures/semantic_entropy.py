@@ -32,7 +32,7 @@ def generate_SE(datasets, data_entail_path, llm_tokenizer, entail_model, entail_
 
         for i in tqdm(range(len(dataset_copy))):
             # Calculate semantic entropy
-            clusters, memory = cluster_responses(dataset_copy[i]["generated_answers"], llm_tokenizer, entail_function, 
+            clusters, memory = cluster_responses(dataset_copy[i]["generated_answers"], llm_tokenizer, is_entailment_transformer, 
                                                  entail_model, entail_tokenizer, question=dataset_copy[i]["question"])
             empty_cache()
             sem_entr = calculate_sem_entr(clusters, dataset_copy[i]["generated_answers"]["sequences_probabilities"])
