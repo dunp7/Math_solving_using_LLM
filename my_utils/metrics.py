@@ -89,12 +89,12 @@ def calculate_auroc(datasets, measure_type='SE', save_path="results/", label_typ
         save_path (str): The path to save the AUROC results.
         label_type (str): The type of label to use for y_true ('SQuAD', 'LLM', 'Gemini', or 'majority').
     """
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)  
+    # if not os.path.exists(save_path):
+    #     os.makedirs(save_path)  
 
-    if not os.path.exists(save_path + "AUROC"):
-        with open(save_path, "w") as f:
-            pass  # Create an empty file
+    # if not os.path.exists(save_path + "AUROC"):
+    #     with open(save_path, "w") as f:
+    #         pass  # Create an empty file
 
     auroc_list = []
     results = []
@@ -138,9 +138,9 @@ def calculate_auroc(datasets, measure_type='SE', save_path="results/", label_typ
         results.append(result)
 
     # Save results to a .txt file
-    with open(save_path, "a") as f:
-        f.write('\n')
-        f.write("\n".join(results))
+    # with open(save_path, "a") as f:
+    #     f.write('\n')
+    #     f.write("\n".join(results))
     
     return auroc_list
 
@@ -163,12 +163,12 @@ def calculate_aurac(datasets, measure_type = 'SE', save_path = "results/", label
         list: A list of AURAC scores, one for each dataset
     """
 
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)  
+    # if not os.path.exists(save_path):
+    #     os.makedirs(save_path)  
 
-    if not os.path.exists(save_path + "AURAC"):
-        with open(save_path, "w") as f:
-            pass  # Create an empty file
+    # if not os.path.exists(save_path + "AURAC"):
+    #     with open(save_path, "w") as f:
+    #         pass  # Create an empty file
     aurac_list = []
     rej_acc_list = []
     results = []
@@ -218,8 +218,8 @@ def calculate_aurac(datasets, measure_type = 'SE', save_path = "results/", label
         results.append(result)
     
     # Save results to a .txt file
-    with open(save_path, "a") as f:
-        f.write('\n')
-        f.write("\n".join(results))
+    # with open(save_path, "a") as f:
+    #     f.write('\n')
+    #     f.write("\n".join(results))
 
     return aurac_list
