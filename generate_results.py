@@ -66,7 +66,6 @@ def generate_answers(datasets, data_answers_path, llm_model, llm_tokenizer, inst
         llm_model (AutoModelForCausalLM): The language model used to generate responses
         llm_tokenizer (AutoTokenizer): The tokenizer associated with the language model
         intro_promt (str, optional): An introductory prompt for the language model. Defaults to None.
-        acc_flg (int, optional): 2 for Gemini, 1 for LLM, 0 for SQuAD. Defaults to 0.
     Returns:
         None: The results are directly saved to disk
     """
@@ -110,7 +109,6 @@ def gen_responses_probs(model, tokenizer, question, number_responses=10, tempera
         tokenizer (AutoTokenizer): The tokenizer for the model
         question (str): The input question to generate responses for
         number_responses (int): The number of responses to generate, default 10
-        number_responses (float): The number used to modulate the next token probabilities, default 1.0
 
     Returns:
         dict: The deafult dictionary returned from generate() with token and sequence probabilities
