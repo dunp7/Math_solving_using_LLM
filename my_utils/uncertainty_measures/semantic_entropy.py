@@ -7,7 +7,7 @@ from copy import deepcopy
 from torch.cuda import empty_cache
 
 
-def generate_SE(datasets, data_entail_path, llm_tokenizer, entail_model, entail_tokenizer, entail_function):
+def generate_SE(datasets, data_entail_path, entail_model, entail_tokenizer, llm_tokenizer):
     """Computes Semantic Entropy (SE) and clusters responses for questions in multiple datasets
 
     Parameters:
@@ -32,7 +32,7 @@ def generate_SE(datasets, data_entail_path, llm_tokenizer, entail_model, entail_
 
         for i in tqdm(range(len(dataset_copy))):
             # Calculate semantic entropy
-            clusters, memory = cluster_responses(dataset_copy[i]["generated_answers"], llm_tokenizer, entail_function, 
+            clusters, memory = cluster_responses(dataset_copy[i]["generated_answers"], llm_tokenizer, is_entailment_transformer, 
                                                  entail_model, entail_tokenizer, question=dataset_copy[i]["question"])
             empty_cache()
             sem_entr = calculate_sem_entr(clusters, dataset_copy[i]["generated_answers"]["sequences_probabilities"])
@@ -153,8 +153,8 @@ def calculate_sem_entr(clusters, sequences_prob):
     norm_prob = sum(sequences_prob)
     
     for cluster in clusters:
-        cluster_prob = sum(sequences_prob[i] for i in cluster) / norm_prob
-        sem_entr += cluster_prob * np.log(cluster_prob)
+        cluster_prob = sum(sequences_prob[i] for i in cluster) / (norm_prob + 1e-10)
+        sem_entr += cluster_prob * np.log(cluster_prob + 1e-10)
     
     return -sem_entr
 

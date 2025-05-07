@@ -6,15 +6,15 @@ from torchmetrics.text import SQuAD
 from google import genai
 import os
 
-def assess_acc_SQuAD(response, answer):
+def assess_acc_SQuAD(pred, target):
     """Assesses the semantic equivalence between a proposed response and the expected answer for a given question
     """
-    answer = [{"answers": {"text": [answer]}, "id": "1"}] # Target
-    response = [{"prediction_text": response, "id": "1"}] # Prediction
+    target = [{"answers": {"text": [target]}, "id": "1"}] # Target
+    pred = [{"prediction_text": pred, "id": "1"}] # Prediction
     
 
     squad_metric = SQuAD()
-    metrics = squad_metric(response, answer)
+    metrics = squad_metric(pred, target)
     f1_scores = metrics['f1']
  
     return 1 if f1_scores > 0.5 else 0
@@ -72,7 +72,7 @@ def assess_acc_gemini(api_key, question, answer, response):
         model="gemini-2.0-flash",
         contents=prompt,
     )
-    if "yes" in response.text.lower():
+    if "yes" in response.text.lower():  
         return 1
     else:
         return 0
@@ -89,12 +89,12 @@ def calculate_auroc(datasets, measure_type='SE', save_path="results/", label_typ
         save_path (str): The path to save the AUROC results.
         label_type (str): The type of label to use for y_true ('SQuAD', 'LLM', 'Gemini', or 'majority').
     """
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)  
+    # if not os.path.exists(save_path):
+    #     os.makedirs(save_path)  
 
-    if not os.path.exists(save_path + "AUROC"):
-        with open(save_path, "w") as f:
-            pass  # Create an empty file
+    # if not os.path.exists(save_path + "AUROC"):
+    #     with open(save_path, "w") as f:
+    #         pass  # Create an empty file
 
     auroc_list = []
     results = []
@@ -138,10 +138,11 @@ def calculate_auroc(datasets, measure_type='SE', save_path="results/", label_typ
         results.append(result)
 
     # Save results to a .txt file
-    with open(save_path, "a") as f:
-        f.write('\n')
-        f.write("\n".join(results))
-
+    # with open(save_path, "a") as f:
+    #     f.write('\n')
+    #     f.write("\n".join(results))
+    
+    return auroc_list
 
 
 
@@ -162,12 +163,12 @@ def calculate_aurac(datasets, measure_type = 'SE', save_path = "results/", label
         list: A list of AURAC scores, one for each dataset
     """
 
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)  
+    # if not os.path.exists(save_path):
+    #     os.makedirs(save_path)  
 
-    if not os.path.exists(save_path + "AURAC"):
-        with open(save_path, "w") as f:
-            pass  # Create an empty file
+    # if not os.path.exists(save_path + "AURAC"):
+    #     with open(save_path, "w") as f:
+    #         pass  # Create an empty file
     aurac_list = []
     rej_acc_list = []
     results = []
@@ -217,6 +218,8 @@ def calculate_aurac(datasets, measure_type = 'SE', save_path = "results/", label
         results.append(result)
     
     # Save results to a .txt file
-    with open(save_path, "a") as f:
-        f.write('\n')
-        f.write("\n".join(results))
+    # with open(save_path, "a") as f:
+    #     f.write('\n')
+    #     f.write("\n".join(results))
+
+    return aurac_list
