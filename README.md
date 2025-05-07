@@ -10,7 +10,6 @@ The primary innovation in this work is the use of **prompt optimization** to inc
 
 In this thesis, There are 2 main parts: **Prompt Comparison** and **Hallucination Detection**. 
 
-
 ## Installation and Usage
  We recommend using a virtual environment, like Conda, to install the necessary packages.
  We use **Python 3.12.5** and **Pytorch 12.4**.
