@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import os
 
+
 def visualise_aur_results(models_names, datasets_names, results, colours, metric_name, location = "results/figures"):
     """Creates a bar plot to visualize F1/AUROC/AURAC scores across different models and datasets
 

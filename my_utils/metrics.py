@@ -6,6 +6,7 @@ from torchmetrics.text import SQuAD
 from google import genai
 import os
 
+
 def assess_acc_SQuAD(pred, target):
     """Assesses the semantic equivalence between a proposed response and the expected answer for a given question
     """

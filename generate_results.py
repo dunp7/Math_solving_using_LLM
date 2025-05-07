@@ -151,4 +151,4 @@ def gen_responses_probs(model, tokenizer, question, number_responses=10, tempera
         "sequences_probabilities": [-np.sum(np.log(prob)) / len(prob) for prob in sequence_token_probabilities], 
     }
 
-    return outputs
+    return outputs 
